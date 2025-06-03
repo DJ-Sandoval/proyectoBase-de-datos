@@ -76,10 +76,8 @@ public class UsuarioDAO {
 
     // Eliminar usuario con validación de préstamos o reservas activas
     public boolean eliminarUsuario(int idUsuario) {
-        // Validar préstamos activos
-        String sqlPrestamos = "SELECT COUNT(*) FROM Prestamos WHERE id_usuario = ? AND estado = 'activo'";
-        // Validar reservas activas
-        String sqlReservas = "SELECT COUNT(*) FROM Reservas WHERE id_usuario = ? AND estado = 'activa'";
+        String sqlPrestamos = "SELECT COUNT(*) FROM Prestamos WHERE id_usuario = ?";
+        String sqlReservas = "SELECT COUNT(*) FROM Reservas WHERE id_usuario = ?";
 
         try (Connection conn = Conexion.getConnection()) {
             // Verificar préstamos
@@ -88,7 +86,7 @@ public class UsuarioDAO {
             ResultSet rsPrestamos = stmtPrestamos.executeQuery();
             rsPrestamos.next();
             if (rsPrestamos.getInt(1) > 0) {
-                return false; // No eliminar si hay préstamos activos
+                return false; // No eliminar si hay préstamos
             }
 
             // Verificar reservas
@@ -97,7 +95,7 @@ public class UsuarioDAO {
             ResultSet rsReservas = stmtReservas.executeQuery();
             rsReservas.next();
             if (rsReservas.getInt(1) > 0) {
-                return false; // No eliminar si hay reservas activas
+                return false; // No eliminar si hay reservas
             }
 
             // Eliminar usuario
@@ -106,7 +104,7 @@ public class UsuarioDAO {
             stmtEliminar.setInt(1, idUsuario);
             return stmtEliminar.executeUpdate() > 0;
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error al eliminar usuario", e);
+            LOGGER.log(Level.SEVERE, "Error al eliminar usuario: " + e.getMessage(), e);
             return false;
         }
     }

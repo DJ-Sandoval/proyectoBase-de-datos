@@ -62,7 +62,7 @@ public class frmUsuarios extends javax.swing.JFrame {
         btnEliminar = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         tbtUsuarios.setModel(new javax.swing.table.DefaultTableModel(
                 new Object [][] {},

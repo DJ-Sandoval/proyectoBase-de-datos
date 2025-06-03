@@ -7,12 +7,10 @@ import model.Autor;
 import model.Categoria;
 import model.Editorial;
 import model.Libro;
-/**
- *
- * @author jose
- */
+
 public class LibroDAO {
-    // Agregar libro
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LibroDAO.class.getName());
+
     public void agregarLibro(Libro libro) throws SQLException {
         String sqlLibro = "INSERT INTO Libros (ISBN, titulo, id_editorial, ano_publicacion, id_categoria) VALUES (?, ?, ?, ?, ?)";
         String sqlLibroAutor = "INSERT INTO Libro_Autor (ISBN, id_autor) VALUES (?, ?)";
@@ -20,7 +18,6 @@ public class LibroDAO {
         try (Connection conn = Conexion.getConnection()) {
             conn.setAutoCommit(false);
 
-            // Insertar libro
             try (PreparedStatement stmt = conn.prepareStatement(sqlLibro)) {
                 stmt.setString(1, libro.getISBN());
                 stmt.setString(2, libro.getTitulo());
@@ -30,7 +27,6 @@ public class LibroDAO {
                 stmt.executeUpdate();
             }
 
-            // Insertar relaciones libro-autor
             try (PreparedStatement stmt = conn.prepareStatement(sqlLibroAutor)) {
                 for (Autor autor : libro.getAutores()) {
                     stmt.setString(1, libro.getISBN());
@@ -40,12 +36,13 @@ public class LibroDAO {
             }
 
             conn.commit();
+            logger.info("Libro agregado: " + libro.getISBN());
         } catch (SQLException e) {
+            logger.severe("Error al agregar libro: " + e.getMessage());
             throw e;
         }
     }
 
-    // Modificar libro
     public void modificarLibro(Libro libro) throws SQLException {
         String sqlLibro = "UPDATE Libros SET titulo = ?, id_editorial = ?, ano_publicacion = ?, id_categoria = ? WHERE ISBN = ?";
         String sqlDeleteAutores = "DELETE FROM Libro_Autor WHERE ISBN = ?";
@@ -54,7 +51,6 @@ public class LibroDAO {
         try (Connection conn = Conexion.getConnection()) {
             conn.setAutoCommit(false);
 
-            // Actualizar libro
             try (PreparedStatement stmt = conn.prepareStatement(sqlLibro)) {
                 stmt.setString(1, libro.getTitulo());
                 stmt.setInt(2, libro.getIdEditorial());
@@ -64,13 +60,11 @@ public class LibroDAO {
                 stmt.executeUpdate();
             }
 
-            // Eliminar autores existentes
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteAutores)) {
                 stmt.setString(1, libro.getISBN());
                 stmt.executeUpdate();
             }
 
-            // Insertar nuevos autores
             try (PreparedStatement stmt = conn.prepareStatement(sqlLibroAutor)) {
                 for (Autor autor : libro.getAutores()) {
                     stmt.setString(1, libro.getISBN());
@@ -80,12 +74,13 @@ public class LibroDAO {
             }
 
             conn.commit();
+            logger.info("Libro modificado: " + libro.getISBN());
         } catch (SQLException e) {
+            logger.severe("Error al modificar libro: " + e.getMessage());
             throw e;
         }
     }
 
-    // Buscar libros
     public List<Libro> buscarLibros(String criterio, String valor) throws SQLException {
         String sql = "SELECT l.*, c.nombre_categoria, e.nombre as nombre_editorial " +
                 "FROM Libros l " +
@@ -108,7 +103,6 @@ public class LibroDAO {
                     libro.setAnioPublicacion(rs.getInt("ano_publicacion"));
                     libro.setIdCategoria(rs.getInt("id_categoria"));
 
-                    // Obtener autores
                     List<Autor> autores = getAutoresPorLibro(libro.getISBN());
                     libro.setAutores(autores);
 
@@ -119,7 +113,6 @@ public class LibroDAO {
         return libros;
     }
 
-    // Obtener autores por libro
     private List<Autor> getAutoresPorLibro(String isbn) throws SQLException {
         String sql = "SELECT a.* FROM Autores a JOIN Libro_Autor la ON a.id_autor = la.id_autor WHERE la.ISBN = ?";
         List<Autor> autores = new ArrayList<>();
@@ -141,40 +134,56 @@ public class LibroDAO {
         return autores;
     }
 
-    // Eliminar libro
     public boolean eliminarLibro(String isbn) throws SQLException {
-        // Verificar préstamos activos
         String sqlPrestamos = "SELECT COUNT(*) FROM Prestamos WHERE ISBN = ? AND fecha_devolucion IS NULL";
+        String sqlReservas = "SELECT COUNT(*) FROM Reservas WHERE ISBN = ?";
         String sqlDeleteLibroAutor = "DELETE FROM Libro_Autor WHERE ISBN = ?";
         String sqlDeleteLibro = "DELETE FROM Libros WHERE ISBN = ?";
 
         try (Connection conn = Conexion.getConnection()) {
             conn.setAutoCommit(false);
 
-            // Verificar préstamos
+            // Check for active loans
             try (PreparedStatement stmt = conn.prepareStatement(sqlPrestamos)) {
                 stmt.setString(1, isbn);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next() && rs.getInt(1) > 0) {
-                    return false; // Hay préstamos activos
+                    logger.info("No se puede eliminar libro " + isbn + " debido a préstamos activos");
+                    return false;
                 }
             }
 
-            // Eliminar relaciones libro-autor
+            // Check for active reservations
+            try (PreparedStatement stmt = conn.prepareStatement(sqlReservas)) {
+                stmt.setString(1, isbn);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    logger.info("No se puede eliminar libro " + isbn + " debido a reservas activas");
+                    return false;
+                }
+            }
+
+            // Delete libro-autor relationships
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteLibroAutor)) {
                 stmt.setString(1, isbn);
                 stmt.executeUpdate();
             }
 
-            // Eliminar libro
+            // Delete libro
             try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteLibro)) {
                 stmt.setString(1, isbn);
-                stmt.executeUpdate();
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    logger.warning("No se encontró el libro con ISBN: " + isbn);
+                    return false;
+                }
             }
 
             conn.commit();
+            logger.info("Libro eliminado: " + isbn);
             return true;
         } catch (SQLException e) {
+            logger.severe("Error al eliminar libro: " + e.getMessage());
             throw e;
         }
     }
@@ -210,7 +219,4 @@ public class LibroDAO {
         }
         return categorias;
     }
-
-
-
 }

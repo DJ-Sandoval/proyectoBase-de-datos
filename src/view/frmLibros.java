@@ -69,16 +69,16 @@ public class frmLibros extends javax.swing.JFrame {
         btnEliminar = new javax.swing.JButton();
         btnListar = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         tbtLibros.setModel(new javax.swing.table.DefaultTableModel(
-                new Object [][] {
+                new Object[][]{
                         {null, null, null, null},
                         {null, null, null, null},
                         {null, null, null, null},
                         {null, null, null, null}
                 },
-                new String [] {
+                new String[]{
                         "Title 1", "Title 2", "Title 3", "Title 4"
                 }
         ));
@@ -210,32 +210,38 @@ public class frmLibros extends javax.swing.JFrame {
         JTextField txtAutores = new JTextField(20);
 
         // Add components with proper alignment
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         dialog.add(new JLabel("ISBN:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtISBN, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         dialog.add(new JLabel("Título:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtTitulo, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         dialog.add(new JLabel("Editorial:"), gbc);
         gbc.gridx = 1;
         dialog.add(cmbEditorial, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         dialog.add(new JLabel("Año Publicación:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtAnio, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         dialog.add(new JLabel("Categoría:"), gbc);
         gbc.gridx = 1;
         dialog.add(cmbCategoria, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         dialog.add(new JLabel("Autores (ID separados por coma):"), gbc);
         gbc.gridx = 1;
         dialog.add(txtAutores, gbc);
@@ -304,7 +310,8 @@ public class frmLibros extends javax.swing.JFrame {
         buttonPanel.add(btnSave);
         buttonPanel.add(btnCancel);
 
-        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         dialog.add(buttonPanel, gbc);
 
@@ -361,32 +368,38 @@ public class frmLibros extends javax.swing.JFrame {
         }
         JTextField txtAutores = new JTextField(autores, 20);
 
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         dialog.add(new JLabel("ISBN:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtISBN, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         dialog.add(new JLabel("Título:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtTitulo, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         dialog.add(new JLabel("Editorial:"), gbc);
         gbc.gridx = 1;
         dialog.add(cmbEditorial, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 3;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         dialog.add(new JLabel("Año Publicación:"), gbc);
         gbc.gridx = 1;
         dialog.add(txtAnio, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 4;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         dialog.add(new JLabel("Categoría:"), gbc);
         gbc.gridx = 1;
         dialog.add(cmbCategoria, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         dialog.add(new JLabel("Autores (ID separados por coma):"), gbc);
         gbc.gridx = 1;
         dialog.add(txtAutores, gbc);
@@ -451,7 +464,8 @@ public class frmLibros extends javax.swing.JFrame {
         buttonPanel.add(btnSave);
         buttonPanel.add(btnCancel);
 
-        gbc.gridx = 0; gbc.gridy = 6;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         dialog.add(buttonPanel, gbc);
 
@@ -635,5 +649,4 @@ public class frmLibros extends javax.swing.JFrame {
             return new String[]{"Ficción", "No Ficción", "Ciencia", "Historia"};
         }
     }
-
 }

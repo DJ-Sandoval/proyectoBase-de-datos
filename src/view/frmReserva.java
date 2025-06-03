@@ -73,7 +73,7 @@ public class frmReserva extends javax.swing.JFrame {
         btnConsultar = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         tbtReserva.setModel(new javax.swing.table.DefaultTableModel(
                 new Object [][] {

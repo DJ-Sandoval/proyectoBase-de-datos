@@ -2,7 +2,6 @@ package controller;
 
 import conection.Conexion;
 import model.Multa;
-import model.Prestamo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,7 +25,7 @@ public class MultaDAO {
             pstmt.setDouble(2, monto);
             pstmt.setDate(3, new java.sql.Date(new Date().getTime()));
             int rowsAffected = pstmt.executeUpdate();
-            logger.info("Multa generada para id_prestamo: " + idPrestamo);
+            logger.info("Multa generada para id_prestamo: " + idPrestamo + ", monto: " + monto);
             return rowsAffected > 0;
         } catch (SQLException e) {
             logger.severe("Error al generar multa: " + e.getMessage());
@@ -52,15 +51,19 @@ public class MultaDAO {
     }
 
     /**
-     * Retrieves pending fines for a specific user.
+     * Retrieves pending fines for a specific user or all pending fines if idUsuario is 0.
      */
     public List<Multa> consultarMultasPendientes(int idUsuario) {
         List<Multa> multas = new ArrayList<>();
-        String sql = "SELECT m.* FROM Multas m JOIN Prestamos p ON m.id_prestamo = p.id_prestamo " +
-                "WHERE p.id_usuario = ? AND m.estado = 'Pendiente'";
+        String sql = idUsuario == 0 ?
+                "SELECT * FROM Multas WHERE estado = 'Pendiente'" :
+                "SELECT m.* FROM Multas m JOIN Prestamos p ON m.id_prestamo = p.id_prestamo " +
+                        "WHERE p.id_usuario = ? AND m.estado = 'Pendiente'";
         try (Connection conn = Conexion.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, idUsuario);
+            if (idUsuario != 0) {
+                pstmt.setInt(1, idUsuario);
+            }
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Multa multa = new Multa();
@@ -71,7 +74,7 @@ public class MultaDAO {
                 multa.setEstado(rs.getString("estado"));
                 multas.add(multa);
             }
-            logger.info("Consultadas multas pendientes para id_usuario: " + idUsuario);
+            logger.info("Consultadas multas pendientes para id_usuario: " + (idUsuario == 0 ? "todos" : idUsuario));
         } catch (SQLException e) {
             logger.severe("Error al consultar multas pendientes: " + e.getMessage());
         }
@@ -79,30 +82,42 @@ public class MultaDAO {
     }
 
     /**
-     * Checks if a loan is overdue and calculates the fine amount.
+     * Checks if a loan is overdue and generates a fine for each overdue day.
      */
-    public double calcularMultaPorRetraso(int idPrestamo) {
-        String sql = "SELECT fecha_devolucion FROM Prestamos WHERE id_prestamo = ?";
+    public void checkAndGenerateFines() throws SQLException {
+        String sql = "SELECT id_prestamo, fecha_limite FROM Prestamos WHERE fecha_devolucion IS NULL";
         try (Connection conn = Conexion.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, idPrestamo);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                Date fechaDevolucion = rs.getDate("fecha_devolucion");
-                Date today = new Date();
-                if (fechaDevolucion != null && today.after(fechaDevolucion)) {
-                    long diffInMillies = today.getTime() - fechaDevolucion.getTime();
-                    long diasRetraso = diffInMillies / (1000 * 60 * 60 * 24);
-                    double montoPorDia = 1.0; // $1 per day of delay
-                    return diasRetraso * montoPorDia;
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            java.util.Date today = new java.util.Date();
+            while (rs.next()) {
+                int idPrestamo = rs.getInt("id_prestamo");
+                Date fechaLimite = rs.getDate("fecha_limite");
+                if (fechaLimite != null && today.after(fechaLimite)) {
+                    long diffInMillies = today.getTime() - fechaLimite.getTime();
+                    long diasRetraso = diffInMillies / (1000 * 60 * 60 * 24) + 1; // Include the first overdue day
+                    // Check existing fines for this loan
+                    String checkFineSql = "SELECT COUNT(*) FROM Multas WHERE id_prestamo = ? AND estado = 'Pendiente'";
+                    try (PreparedStatement checkStmt = conn.prepareStatement(checkFineSql)) {
+                        checkStmt.setInt(1, idPrestamo);
+                        ResultSet checkRs = checkStmt.executeQuery();
+                        if (checkRs.next()) {
+                            int existingFines = checkRs.getInt(1);
+                            // Generate additional fines if needed
+                            for (int i = existingFines + 1; i <= diasRetraso; i++) {
+                                generarMulta(idPrestamo, 5.0); // 5 MXN per overdue day
+                                logger.info("Multa generada automáticamente para préstamo ID: " + idPrestamo + ", día " + i);
+                            }
+                        }
+                    }
                 }
             }
-        } catch (SQLException e) {
-            logger.severe("Error al calcular multa por retraso: " + e.getMessage());
         }
-        return 0.0;
     }
 
+    /**
+     * Retrieves all fines.
+     */
     public List<Multa> consultarTodasMultas() {
         List<Multa> multas = new ArrayList<>();
         String sql = "SELECT * FROM Multas";
